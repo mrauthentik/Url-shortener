@@ -1,6 +1,7 @@
 require('dotenv').config()
 const mongoose = require('mongoose');
 const express = require('express');
+const Url = require('./models/Url')
 
 const app = express();
 app.use(express.json())
@@ -20,22 +21,27 @@ app.get('/', (req, res)=>{
 const urlDatabase = {}
 let idCounter = 1
 
-app.post('/shorten', (req,res)=>{
-    const { longUrl } = req.body
+app.post('/shorten', async (req, res) => {
+    const {longUrl } = req.body
 
     if(!longUrl) {
-        return res.status(400).json({ error: "longUrl is required"})
+        return res.status(400).json({ error: "long url is required"})
     }
 
-    const shortCode = idCounter.toString(36)
-    idCounter++
+    try {
+        const count = await Url.countDocuments()
+        const shortCode = (count + 1).toString(36)
 
-    urlDatabase[shortCode] = longUrl
+        const url = await Url.create({ shortCode, longUrl})
 
-    res.status(201).json({
-        shortCode,
-        shortUrl: `http://localhost:3000/${shortCode}`
-    })
+        res.status(201).json({
+            shortCode: url.shortCode,
+            shortUrl: `http://localhost:3000/${url.shortCode}`,
+        })
+    }catch(err){
+        console.error('Error creating short URL:', err.message)
+        res.status(500).json({ error: 'Internal server error' })
+    }
 })
 
 app.get('/:shortCode', (req, res)=> {
@@ -47,6 +53,13 @@ app.get('/:shortCode', (req, res)=> {
         return res.status(404).json({ error: 'Short URL not found'})
     }
     res.redirect(302, longUrl)
+})
+
+app.get('/:shortCode', async (req, res) => {
+    const {shortCode } = req.params;
+    const url = await Url.findOne({shortCode})
+    if(!url) return res.status(404).json({error: 'Short URL not found'})
+
 })
 
 app.listen(3000, ()=>{
