@@ -4,8 +4,17 @@ const express = require('express');
 
 const app = express();
 app.use(express.json())
+
+mongoose.connect(process.env.MONGO_URI)
+    .then(()=> console.log('MongoDB connected ✅'))
+    .catch((err)=> {
+        console.error('MongoDB connection failed ❌:', err.message)
+        process.exit(1)
+    })
+
+
 app.get('/', (req, res)=>{
-    res.send("Hello, Url Shortener")
+    res.send("Hello, Url Shortene")
 })
 
 const urlDatabase = {}
