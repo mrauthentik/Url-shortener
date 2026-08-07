@@ -1,7 +1,11 @@
 require('dotenv').config()
 const mongoose = require('mongoose');
+const redis = require('redis');
 const express = require('express');
 const Url = require('./models/Url')
+const redisClient = redis.createClient({
+    url: process.env.REDIS_URL
+})
 
 const app = express();
 app.use(express.json())
@@ -13,6 +17,14 @@ mongoose.connect(process.env.MONGO_URI)
         process.exit(1)
     })
 
+
+redisClient.connect()
+.then(()=> console.log('Redis connected ✅'))
+.catch(err=> {
+    console.error('Redis connection failed ❌:', err.message)
+})
+
+redisClient.on('error', err => console.error('Redis Client Error:', err.message))
 
 app.get('/', (req, res)=>{
     res.send("Hello, Url Shortene")
