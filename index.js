@@ -60,11 +60,24 @@ app.post('/shorten', async (req, res) => {
 app.get('/:shortCode', async (req, res) => {
     const {shortCode } = req.params;
     try{
+        //First using Redis to check if the shortCode exists in cache
+        const cachedUrl = await redisClient.get(shortCode)
+        if(cachedUrl){
+            console.log('Cache HIT 🚀')
+            res.redirect(302, cachedUrl)
+        } else{
+            console.log('Cache MISS - checking MongoDB.....')
+            const url = await Url.findOne({shortCode})
+            if(!url) return res.status(404).json({error: 'Short URL not found'})
+            
+            //Store the longUrl in Redis cache for future requests
+            redisClient.set(shortCode, url.longUrl , {EX:3600}).catch((err)=>{
+                console.error('Failed to cache URL:', err.message)
+            })
 
-        const url = await Url.findOne({shortCode})
-        if(!url) return res.status(404).json({error: 'Short URL not found'})
-    
             res.redirect(302, url.longUrl)
+        }
+
     }catch(err){
         console.error('Error retrieving long URL:', err.message)
         res.status(500).json({error:'There was a server error'})
