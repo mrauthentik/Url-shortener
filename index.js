@@ -44,22 +44,13 @@ app.post('/shorten', async (req, res) => {
     }
 })
 
-app.get('/:shortCode', (req, res)=> {
-    const { shortCode } = req.params;
-
-    const longUrl = urlDatabase[shortCode]
-
-    if (!longUrl) {
-        return res.status(404).json({ error: 'Short URL not found'})
-    }
-    res.redirect(302, longUrl)
-})
 
 app.get('/:shortCode', async (req, res) => {
     const {shortCode } = req.params;
     const url = await Url.findOne({shortCode})
     if(!url) return res.status(404).json({error: 'Short URL not found'})
 
+        res.redirect(302, url.longUrl)
 })
 
 app.listen(3000, ()=>{
