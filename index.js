@@ -2,6 +2,7 @@ require('dotenv').config()
 const mongoose = require('mongoose');
 const redis = require('redis');
 const express = require('express');
+const rateLimit = require('express-rate-limit')
 const Url = require('./models/Url')
 const redisClient = redis.createClient({
     url: process.env.REDIS_URL
@@ -25,15 +26,21 @@ redisClient.connect()
 })
 
 redisClient.on('error', err => console.error('Redis Client Error:', err.message))
+// For the Rate Limiter
+const limiter = rateLimit({
+    windowMS: 60 * 1000,
+    max: 20,
+    message: {error: "Too many requests, please try again later."}
+})
 
 app.get('/', (req, res)=>{
-    res.send("Hello, Url Shortene")
+    res.send("Hello, Url Shortened")
 })
 
 const urlDatabase = {}
 let idCounter = 1
 
-app.post('/shorten', async (req, res) => {
+app.post('/shorten', limiter, async (req, res) => {
     const {longUrl } = req.body
 
     if(!longUrl) {
