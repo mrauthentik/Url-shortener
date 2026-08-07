@@ -25,6 +25,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.6.2",
     "mongoose": "^9.9.1",
+    "rate-limit-redis": "^6.0.1",
     "redis": "^6.2.0"
   },
   "devDependencies": {
